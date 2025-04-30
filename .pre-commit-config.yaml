@@ -1,0 +1,17 @@
+repos:
+  - repo: https://github.com/awslabs/cfn-python-lint
+    rev: v1.34.2
+    hooks:
+    -   id: cfn-python-lint
+        files: \.(yml|yaml)$
+        exclude: '^\.pre-commit\-config\.yaml$'
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-merge-conflict
+      - id: end-of-file-fixer
+      - id: pretty-format-json
+        args:
+            - --autofix
+      - id: trailing-whitespace
+      - id: check-added-large-files
