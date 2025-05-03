@@ -1,8 +1,8 @@
-# Cloudformation for managing and deploying AWS infrastructure
+# CloudFormation for managing and deploying AWS infrastructure
 
 ## Overview
 
-This project uses Cloudformation to mangage and deploy a simple VPC including public and private subnets, Internet Gateway, route tables, Nat Gateway, Security Groups and EC2 instances.
+This project uses CloudFormation to mangage and deploy a simple VPC including public and private subnets, Internet Gateway, route tables, Nat Gateway, Security Groups and EC2 instances.
 
 ## Prerequisites
 
@@ -121,10 +121,10 @@ Example
 ```
 
 **Note:**
-- ```your_environment```: Your environment.
-- ```your_project_name```: Your project name.
+- ```Environment```: Your environment.
+- ```ProjectName```: Your project name.
 - ```Owner```: Your name.
-- ```your_bucket_name```: Your S3 bucket name where your template files are stored.
+- ```BucketName```: Your S3 bucket name where your template files are stored.
 - ```SSHIP```: your IPv4. For instance: 14.169.70.31/32.
 - ```KeyName```: Name of key pair to SSH. You have to create a key pair before deploying stack.
 
