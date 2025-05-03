@@ -1,0 +1,121 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: >-
+              A Public Security Group and a Private Security Group.
+
+Parameters:
+  Environment:
+    Description: Environment
+    Type: String
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+    ConstraintDescription: Must specify 'dev' or 'staging' or 'prod'
+  ProjectName:
+    Description: Name of Project
+    Type: String
+  Owner:
+    Description: Name of Owner
+    Type: String
+  NamePrefix:
+    Description: Prefix name of the Security Group
+    Type: String
+  VpcID:
+    Description: ID of the VPC
+    Type: String
+  PublicSecurityGroupName:
+    Description: Name of the Public Security Group
+    Type: String
+  PrivateSecurityGroupName:
+    Description: Name of the Private Security Group
+    Type: String
+  SSHIP:
+    Description: An IP address that is allowed to access EC2 instances through SSH.
+    Type: String
+
+Resources:
+  PublicSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH access from Internet.
+      GroupName: !Sub ${NamePrefix}-${PublicSecurityGroupName}
+      VpcId: !Ref VpcID
+      Tags:
+        - Key: Application
+          Value: !Ref AWS::StackName
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Name
+          Value: !Sub ${NamePrefix}-${PublicSecurityGroupName}
+
+  PublicSecurityGroupIngressSSH:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref PublicSecurityGroup
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      CidrIp: !Ref SSHIP
+  
+  PublicSecurityGroupEgressICMP:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref PublicSecurityGroup
+      IpProtocol: icmp
+      FromPort: -1
+      ToPort: -1
+      CidrIp: 0.0.0.0/0
+
+  PrivateSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow SSH access from a Public Security Group
+      GroupName: !Sub ${NamePrefix}-${PrivateSecurityGroupName}
+      VpcId: !Ref VpcID
+      Tags:
+        - Key: Application
+          Value: !Ref AWS::StackName
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Name
+          Value: !Sub ${NamePrefix}-${PrivateSecurityGroupName}
+
+  PrivateSecurityGroupIngressSSH:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref PrivateSecurityGroup
+      IpProtocol: tcp
+      FromPort: 22
+      ToPort: 22
+      SourceSecurityGroupId: !Ref PublicSecurityGroup
+  
+  PrivateSecurityGroupEgressICMP:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref PrivateSecurityGroup
+      IpProtocol: icmp
+      FromPort: -1
+      ToPort: -1
+      CidrIp: 0.0.0.0/0
+
+Outputs:
+  PublicSecurityGroupID:
+    Description: ID of the Public Security Group
+    Value: !Ref PublicSecurityGroup
+    Export:
+      Name: !Sub ${AWS::StackName}-${NamePrefix}-public-security-group-ID
+
+  PrivateSecurityGroupID:
+    Description: ID of the Private Security Group
+    Value: !Ref PrivateSecurityGroup
+    Export:
+      Name: !Sub ${AWS::StackName}-${NamePrefix}-private-security-group-ID

@@ -1,0 +1,93 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: >-
+              A Public EC2 instance and a Private EC2 instance.
+
+Parameters:
+  Environment:
+    Description: Environment
+    Type: String
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+    ConstraintDescription: Must specify 'dev' or 'staging' or 'prod'
+  ProjectName:
+    Description: Name of Project
+    Type: String
+  Owner:
+    Description: Name of Owner
+    Type: String
+  NamePrefix:
+    Description: Prefix name of the Security Group
+    Type: String
+  AMI:
+    Description: ID of the AMI
+    Type: AWS::EC2::Image::Id
+  InstanceType:
+    Description: Instance type of EC2
+    Type: String
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to SSH into the instance
+    Type: AWS::EC2::KeyPair::KeyName
+  PublicEC2Name:
+    Description: Name of the Public EC2
+    Type: String
+  PublicSubnetID:
+    Description: ID of the Public Subnet
+    Type: String
+  PublicSecurityGroupID:
+    Description: ID of the Public Security Group
+    Type: String
+  PrivateEC2Name:
+    Description: Name of the Private EC2
+    Type: String
+  PrivateSubnetID:
+    Description: ID of the Public Subnet
+    Type: String
+  PrivateSecurityGroupID:
+    Description: ID of the Private Security Group
+    Type: String
+
+Resources:
+  PublicEC2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref AMI
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      SecurityGroupIds:
+        - !Ref PublicSecurityGroupID
+      SubnetId: !Ref PublicSubnetID
+      Tags:
+        - Key: Application
+          Value: !Ref AWS::StackName
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Name
+          Value: !Sub ${NamePrefix}-${PublicEC2Name}
+
+  PrivateEC2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref AMI
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      SecurityGroupIds:
+        - !Ref PrivateSecurityGroupID
+      SubnetId: !Ref PrivateSubnetID
+      Tags:
+        - Key: Application
+          Value: !Ref AWS::StackName
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Name
+          Value: !Sub ${NamePrefix}-${PrivateEC2Name}

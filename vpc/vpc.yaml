@@ -1,0 +1,146 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: >-
+              A VPC consists of a Public Subnet and a Private Subnet. The Public Subnet has a Public Route Table, an Internet Gateway,
+              and a Public EC2 instance attached to a Public Security Group, while the Private Subnet has a Private Route Table, a NAT Gateway,
+              and a Private EC2 instance attached to a Private Security Group.
+
+Parameters:
+  Environment:
+    Description: Environment
+    Type: String
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+    ConstraintDescription: Must specify 'dev' or 'staging' or 'prod'
+  ProjectName:
+    Description: Name of Project
+    Type: String
+  Owner:
+    Description: Name of Owner
+    Type: String
+  VpcName:
+    Description: Name of the VPC
+    Type: String
+  VpcCIDR: 
+    Description: CIDR Block of the VPC
+    Type: String
+  PublicSubnetName:
+   Description: Name of the Public Subnet
+   Type: String
+  PublicSubnetCIDR:
+    Description: CIDR Block of the Public Subnet
+    Type: String
+  PrivateSubnetName:
+   Description: Name of the the Private Subnet
+   Type: String
+  PrivateSubnetCIDR:
+    Description: CIDR Block of the Private Subnet
+    Type: String
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      Tags:
+        - Key: Application
+          Value: !Ref AWS::StackName
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Name
+          Value: !Ref VpcName
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select
+      - 0
+      - !GetAZs 
+          Ref: AWS::Region
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PublicSubnetCIDR
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Application
+          Value: !Ref AWS::StackName
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Name
+          Value: !Sub ${VpcName}-${PublicSubnetName}
+
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select
+      - 1
+      - !GetAZs 
+          Ref: AWS::Region
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PrivateSubnetCIDR
+      Tags:
+        - Key: Application
+          Value: !Ref AWS::StackName
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Name
+          Value: !Sub ${VpcName}-${PrivateSubnetName}
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Application
+          Value: !Ref AWS::StackName
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Name
+          Value: !Sub ${VpcName}-igw
+
+  GatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+Outputs:
+  VpcID:
+    Description: ID of the VPC
+    Value: !Ref VPC
+    Export:
+      Name: !Sub ${AWS::StackName}-${VpcName}-ID
+
+  PublicSubnetID:
+    Description: ID of the Public Subnet
+    Value: !Ref PublicSubnet
+    Export:
+      Name: !Sub ${AWS::StackName}-${VpcName}-PublicSubnet-ID
+  
+  PrivateSubnetID:
+    Description: ID of the Private Subnet
+    Value: !Ref PrivateSubnet
+    Export:
+      Name: !Sub ${AWS::StackName}-${VpcName}-PrivateSubnet-ID
+  
+  InternetGatewayID:
+    Description: ID of the Internet Gateway
+    Value: !Ref InternetGateway
+    Export:
+      Name: !Sub ${AWS::StackName}-${VpcName}-Internet-Gateway-ID
