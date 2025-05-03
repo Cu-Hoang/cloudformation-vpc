@@ -1,0 +1,145 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: >-
+                A nested stack that creates a VPC
+                with
+                a Public Subnet containing a Public EC2 instance
+                and 
+                a Private Subnet containing a Private EC2 instance.
+
+Parameters:
+  Environment:
+    Description: Environment
+    Type: String
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+    ConstraintDescription: Must specify 'dev' or 'staging' or 'prod'
+  ProjectName:
+    Description: Name of Project
+    Type: String
+  Owner:
+    Description: Name of Owner
+    Type: String
+  BucketName:
+    Description: Name of the S3 Bucket
+    Type: String
+    Default: S3-Bucket
+  VpcName:
+    Description: Name of the VPC
+    Type: String
+  VpcCIDR: 
+    Description: CIDR Block of the VPC
+    Type: String
+  PublicSubnetName:
+   Description: Name of the Public Subnet
+   Type: String
+  PublicSubnetCIDR:
+    Description: CIDR Block of the Public Subnet
+    Type: String
+  PrivateSubnetName:
+   Description: Name of the the Private Subnet
+   Type: String
+  PrivateSubnetCIDR:
+    Description: CIDR Block of the Private Subnet
+    Type: String
+  PublicSecurityGroupName:
+    Description: Name of the Public Security Group
+    Type: String
+  PrivateSecurityGroupName:
+    Description: Name of the Private Security Group
+    Type: String
+  SSHIP:
+    Description: An IP address that is allowed to access EC2 instances through SSH.
+    Type: String
+  AMI:
+    Description: ID of the AMI
+    Type: String
+  InstanceType:
+    Description: Instance type of EC2
+    Type: String
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to SSH into the instance
+    Type: AWS::EC2::KeyPair::KeyName
+  PublicEC2Name:
+    Description: Name of the Public EC2
+    Type: String
+  PrivateEC2Name:
+    Description: Name of the Private EC2
+    Type: String
+
+Resources:
+  VPCStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${BucketName}.s3.${AWS::Region}.amazonaws.com/vpc.yaml
+      Parameters:
+        Environment: !Ref Environment
+        ProjectName: !Ref ProjectName
+        Owner: !Ref Owner
+        VpcName: !Ref VpcName
+        VpcCIDR: !Ref VpcCIDR
+        PublicSubnetName: !Ref PublicSubnetName
+        PublicSubnetCIDR: !Ref PublicSubnetCIDR
+        PrivateSubnetName: !Ref PrivateSubnetName
+        PrivateSubnetCIDR: !Ref PrivateSubnetCIDR
+
+  NATGatewayStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${BucketName}.s3.${AWS::Region}.amazonaws.com/nat.yaml
+      Parameters:
+        Environment: !Ref Environment
+        ProjectName: !Ref ProjectName
+        Owner: !Ref Owner
+        NamePrefix: !Ref VpcName
+        PublicSubnetID: !GetAtt VPCStack.Outputs.PublicSubnetID
+  
+  RouteTableStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${BucketName}.s3.${AWS::Region}.amazonaws.com/route_table.yaml
+      Parameters:
+        Environment: !Ref Environment
+        ProjectName: !Ref ProjectName
+        Owner: !Ref Owner
+        NamePrefix: !Ref VpcName
+        VpcID: !GetAtt VPCStack.Outputs.VpcID
+        InternetGatewayId: !GetAtt VPCStack.Outputs.InternetGatewayID
+        PublicSubnetID: !GetAtt VPCStack.Outputs.PublicSubnetID
+        NatGatewayId: !GetAtt NATGatewayStack.Outputs.NatGatewayID
+        PrivateSubnetID: !GetAtt VPCStack.Outputs.PrivateSubnetID
+
+  SecurityGroupStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${BucketName}.s3.${AWS::Region}.amazonaws.com/security_group.yaml
+      Parameters:
+        Environment: !Ref Environment
+        ProjectName: !Ref ProjectName
+        Owner: !Ref Owner
+        NamePrefix: !Ref VpcName
+        VpcID: !GetAtt VPCStack.Outputs.VpcID
+        PublicSecurityGroupName: !Ref PublicSecurityGroupName
+        PrivateSecurityGroupName: !Ref PrivateSecurityGroupName
+        SSHIP: !Ref SSHIP
+
+  EC2InstanceStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Sub https://${BucketName}.s3.${AWS::Region}.amazonaws.com/ec2.yaml
+      Parameters:
+        Environment: !Ref Environment
+        ProjectName: !Ref ProjectName
+        Owner: !Ref Owner
+        NamePrefix: !Ref VpcName
+        AMI: !Ref AMI
+        InstanceType: !Ref InstanceType
+        KeyName: !Ref KeyName
+        PublicEC2Name: !Ref PublicEC2Name
+        PublicSubnetID: !GetAtt VPCStack.Outputs.PublicSubnetID
+        PublicSecurityGroupID: !GetAtt SecurityGroupStack.Outputs.PublicSecurityGroupID
+        PrivateEC2Name: !Ref PrivateEC2Name
+        PrivateSubnetID: !GetAtt VPCStack.Outputs.PrivateSubnetID
+        PrivateSecurityGroupID: !GetAtt SecurityGroupStack.Outputs.PrivateSecurityGroupID

@@ -1,0 +1,57 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: >-
+              A NAT Gateway with an associated EIP is attached to a Private Subnet. 
+
+Parameters:
+  Environment:
+    Description: Environment
+    Type: String
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+    ConstraintDescription: Must specify 'dev' or 'staging' or 'prod'
+  ProjectName:
+    Description: Name of Project
+    Type: String
+  Owner:
+    Description: Name of Owner
+    Type: String
+  NamePrefix:
+    Description: Prefix name of the Nat Gateway
+    Type: String
+  PublicSubnetID:
+    Description: ID of the Public Subnet
+    Type: String
+
+Resources:
+  NATGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId: !GetAtt NATGatewayEIP.AllocationId
+      SubnetId: !Ref PublicSubnetID
+      Tags:
+        - Key: Application
+          Value: !Ref AWS::StackName
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Name
+          Value: !Sub ${NamePrefix}-nat-gateway
+  
+  NATGatewayEIP:
+   Type: AWS::EC2::EIP
+   Properties:
+      Domain: vpc
+
+Outputs:
+  NatGatewayID:
+    Description: ID of the Nat Gateway
+    Value: !Ref NATGateway
+    Export:
+      Name: !Sub ${AWS::StackName}-${NamePrefix}-Nat-Gateway-ID
+

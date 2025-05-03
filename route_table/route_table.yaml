@@ -1,0 +1,98 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: >-
+              A Public Route Table and a Private Route Table.
+
+Parameters:
+  Environment:
+    Description: Environment
+    Type: String
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+    ConstraintDescription: Must specify 'dev' or 'staging' or 'prod'
+  ProjectName:
+    Description: Name of Project
+    Type: String
+  Owner:
+    Description: Name of Owner
+    Type: String
+  NamePrefix:
+    Description: Prefix name of the Nat Gateway
+    Type: String
+  VpcID:
+    Description: ID of the VPC
+    Type: String
+  InternetGatewayId:
+    Description: ID of the Internet Gateway
+    Type: String
+  PublicSubnetID:
+    Description: ID of the Public Subnet
+    Type: String
+  NatGatewayId:
+    Description: ID of the Nat Gateway
+    Type: String
+  PrivateSubnetID:
+    Description: ID of the Public Subnet
+    Type: String
+
+Resources:
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VpcID
+      Tags: 
+      - Key: Application
+        Value: !Ref AWS::StackName
+      - Key: Environment
+        Value: !Ref Environment
+      - Key: ProjectName
+        Value: !Ref ProjectName
+      - Key: Owner
+        Value: !Ref Owner
+      - Key: Name
+        Value: !Sub ${NamePrefix}-public-route-table
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGatewayId
+  
+  PublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetID
+      RouteTableId: !Ref PublicRouteTable
+  
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VpcID
+      Tags: 
+      - Key: Application
+        Value: !Ref AWS::StackName
+      - Key: Environment
+        Value: !Ref Environment
+      - Key: ProjectName
+        Value: !Ref ProjectName
+      - Key: Owner
+        Value: !Ref Owner
+      - Key: Name
+        Value: !Sub ${NamePrefix}-private-route-table
+
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref NatGatewayId
+  
+  PrivateSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnetID
+      RouteTableId: !Ref PrivateRouteTable
+
