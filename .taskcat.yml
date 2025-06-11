@@ -1,0 +1,30 @@
+project:
+  name: vpc-lab
+  regions:
+    - ap-southeast-1
+
+tests:
+  vpc-test:
+    template: root.yaml
+    parameters:
+      Environment: dev
+      ProjectName: vpc-lab
+      Owner: ngochoang
+      BucketName: vpc-lab-1712
+      VpcName: my-vpc-01
+      VpcCIDR: 10.0.0.0/16
+      PublicSubnetName: public-subnet-01
+      PublicSubnetCIDR: 10.0.0.0/20
+      PrivateSubnetName: private-subnet-01
+      PrivateSubnetCIDR: 10.0.16.0/20
+      PublicSecurityGroupName: public-sg-01
+      PrivateSecurityGroupName: private-sg-01
+      SSHIP: 0.0.0.0/0
+      AMI: ami-0e8ebb0ab254bb563
+      InstanceType: t2.micro
+      KeyName: ssh-key
+      PublicEC2Name: public-ec2-01
+      PrivateEC2Name: private-ec2-01
+
+    regions:
+    - ap-southeast-1
