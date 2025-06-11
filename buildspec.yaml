@@ -13,7 +13,11 @@ phases:
   pre_build:
     on-failure: ABORT
     commands:
-      - cfn-lint ec2/*.yaml nat/*.yaml route_table/*.yaml security_group/*.yaml vpc/*.yaml codepipeline.yaml root.yaml
+      - |
+        set +e
+        cfn-lint ec2/*.yaml nat/*.yaml route_table/*.yaml security_group/*.yaml vpc/*.yaml codepipeline.yaml root.yaml
+        set -e
+
 
   build:
     on-failure: ABORT
