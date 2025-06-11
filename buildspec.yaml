@@ -22,9 +22,10 @@ phases:
     on-failure: ABORT
     commands:
       - mkdir -p temp_upload
-      - cp ec2/ec2.yaml nat/nat.yaml route_table/route_table.yaml security_group/security_group.yaml vpc/vpc.yaml temp_upload/
-      - cp root.yaml temp_upload/
+      - cp ec2/ec2.yaml nat/nat.yaml route_table/route_table.yaml security_group/security_group.yaml vpc/vpc.yaml root.yaml temp_upload/
       - aws s3 sync temp_upload/ s3://$S3_BUCKET --delete
+      - cp .taskcat.yaml temp_upload/
+      - cd temp_upload
       - taskcat test run --debug
 
 artifacts:
