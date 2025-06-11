@@ -30,3 +30,4 @@ phases:
     name: templates
     files:
       - root.yaml
+    base-directory: temp_upload
