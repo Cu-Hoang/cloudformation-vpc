@@ -3,7 +3,6 @@ version: 0.2
 env:
   variables:
     S3_BUCKET: vpc-lab-1712
-    TASKCAT_OUTPUT: vpc-lab-1712-taskcat
 
 phases:
   install:
@@ -23,10 +22,10 @@ phases:
     on-failure: ABORT
     commands:
       - mkdir -p temp_upload
-      - cp -r ec2 nat route_table security_group vpc temp_upload/
+      - cp ec2/ec2.yaml nat/nat.yaml route_table/route_table.yaml security_group/security_group.yaml vpc/vpc.yaml temp_upload/
       - cp root.yaml temp_upload/
       - aws s3 sync temp_upload/ s3://$S3_BUCKET --delete
-      - taskcat test run
+      - taskcat test run --debug
 
 artifacts:
   name: templates
