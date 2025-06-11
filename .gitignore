@@ -1,2 +1,4 @@
 parameters.json
 *.pem
+.taskcat/
+taskcat_outputs

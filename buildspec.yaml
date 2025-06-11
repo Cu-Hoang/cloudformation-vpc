@@ -26,7 +26,7 @@ phases:
       - aws s3 sync temp_upload/ s3://$S3_BUCKET --delete
       - cp .taskcat.yaml temp_upload/
       - cd temp_upload
-      - taskcat test run --input-file .taskcat.yaml --debug
+      - taskcat -d test run
 
 artifacts:
   name: templates
