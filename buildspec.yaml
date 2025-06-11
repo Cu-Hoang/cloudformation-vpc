@@ -26,8 +26,8 @@ phases:
     finally:
       - aws s3 sync taskcat_outputs/ s3://$TASKCAT_OUTPUT/outputs --acl public-read --delete
 
-  artifacts:
-    name: templates
-    files:
-      - root.yaml
-    base-directory: temp_upload
+artifacts:
+  name: templates
+  files:
+    - root.yaml
+  base-directory: temp_upload
