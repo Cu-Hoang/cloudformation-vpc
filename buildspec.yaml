@@ -15,7 +15,7 @@ phases:
     commands:
       - |
         set +e
-        cfn-lint ec2/*.yaml nat/*.yaml route_table/*.yaml security_group/*.yaml vpc/*.yaml codepipeline.yaml root.yaml
+        cfn-lint ec2/ec2.yaml nat/nat.yaml route_table/route_table.yaml security_group/security_group.yaml vpc/vpc.yaml codepipeline.yaml root.yaml
         set -e
 
 
@@ -27,8 +27,6 @@ phases:
       - cp root.yaml temp_upload/
       - aws s3 sync temp_upload/ s3://$S3_BUCKET --delete
       - taskcat test run
-    finally:
-      - aws s3 sync taskcat_outputs/ s3://$TASKCAT_OUTPUT/outputs --acl public-read --delete
 
 artifacts:
   name: templates
