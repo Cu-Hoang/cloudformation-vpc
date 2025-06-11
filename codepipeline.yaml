@@ -183,7 +183,7 @@ Resources:
                   - 'codebuild:StartBuild'
                   - 'codebuild:BatchGetBuilds'
                 Effect: Allow
-                Resource: !GetAtt [CodeBuild, Arn]
+                Resource: !GetAtt [CodeBuildProject, Arn]
 
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
@@ -193,7 +193,7 @@ Resources:
         Type: CODEPIPELINE
         GitCloneDepth: 1
         BuildSpec: buildspec.yaml
-      Artifacts: 
+      Artifacts:
         Type: CODEPIPELINE
       Environment:
         PrivilegedMode: True
@@ -223,9 +223,9 @@ Resources:
       Name: pipeline
       PipelineType: V2
       RoleArn: !GetAtt [CodePipelineRole, Arn]
-      Stages: 
+      Stages:
         - Name: Source
-          Actions: 
+          Actions:
             - Name: Source
               ActionTypeId:
                 Category: Source
@@ -241,7 +241,7 @@ Resources:
                 OutputArtifactFormat: CODE_ZIP
               RunOrder: 1
         - Name: Build
-          Actions: 
+          Actions:
             - Name: Build
               InputArtifacts:
                 - Name: SourceOutput
@@ -250,17 +250,17 @@ Resources:
                 Owner: AWS
                 Version: 1
                 Provider: CodeBuild
-              OutputArtifacts: 
+              OutputArtifacts:
                 - Name: BuildOutput
               Configuration:
                 ProjectName: !Ref CodeBuildProject
               RunOrder: 1
         - Name: Deploy
-          Actions: 
+          Actions:
             - Name: Deploy
               InputArtifacts:
                 - Name: BuildOutput
-              ActionTypeId: 
+              ActionTypeId:
                 Category: Deploy
                 Owner: AWS
                 Version: 1
@@ -270,7 +270,27 @@ Resources:
                 StackName: !Sub ${ProjectName}-deploy-stack
                 Capabilities: CAPABILITY_NAMED_IAM
                 TemplatePath: BuildOutput::root.yaml
-                Parameters: BuildOutput::parameters.json
+                ParameterOverrides: |
+                  {
+                    "Environment": "dev",
+                    "ProjectName": "vpc-lab",
+                    "Owner": "ngochoang",
+                    "BucketName": "vpc-lab-1712",
+                    "VpcName": "my-vpc-01",
+                    "VpcCIDR": "10.0.0.0/16",
+                    "PublicSubnetName": "public-subnet-01",
+                    "PublicSubnetCIDR": "10.0.0.0/20",
+                    "PrivateSubnetName": "private-subnet-01",
+                    "PrivateSubnetCIDR": "10.0.16.0/20",
+                    "PublicSecurityGroupName": "public-sg-01",
+                    "PrivateSecurityGroupName": "private-sg-01",
+                    "SSHIP": "0.0.0.0/0",
+                    "AMI": "ami-0e8ebb0ab254bb563",
+                    "InstanceType": "t2.micro",
+                    "KeyName": "ssh-key",
+                    "PublicEC2Name": "public-ec2-01",
+                    "PrivateEC2Name": "private-ec2-01"
+                  }
                 RoleArn: !GetAtt [CFNRole, Arn]
               RunOrder: 1
       Tags:
