@@ -88,30 +88,6 @@ Resources:
         - Key: Name
           Value: !Sub ${NamePrefix}-artifacts-bucket
 
-  TaskCatBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: !Sub ${BucketName}-taskcat
-      OwnershipControls:
-        Rules:
-          - ObjectOwnership: BucketOwnerPreferred
-      PublicAccessBlockConfiguration:
-        BlockPublicAcls: false
-        IgnorePublicAcls: false
-        BlockPublicPolicy: false
-        RestrictPublicBuckets: false
-      Tags:
-        - Key: Application
-          Value: !Ref AWS::StackName
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: ProjectName
-          Value: !Ref ProjectName
-        - Key: Owner
-          Value: !Ref Owner
-        - Key: Name
-          Value: !Sub ${NamePrefix}-taskcat-bucket
-
   CFNRole:
     Type: AWS::IAM::Role
     Properties:

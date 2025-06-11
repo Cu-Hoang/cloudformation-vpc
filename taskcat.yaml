@@ -11,5 +11,42 @@ project:
 tests:
   vpc-test:
     template: root.yaml
+    parameters:
+      - ParameterKey: Environment
+        ParameterValue: dev
+      - ParameterKey: ProjectName
+        ParameterValue: vpc-lab
+      - ParameterKey: Owner
+        ParameterValue: ngochoang
+      - ParameterKey: BucketName
+        ParameterValue: vpc-lab-1712
+      - ParameterKey: VpcName
+        ParameterValue: my-vpc-01
+      - ParameterKey: VpcCIDR
+        ParameterValue: 10.0.0.0/16
+      - ParameterKey: PublicSubnetName
+        ParameterValue: public-subnet-01
+      - ParameterKey: PublicSubnetCIDR
+        ParameterValue: 10.0.0.0/20
+      - ParameterKey: PrivateSubnetName
+        ParameterValue: private-subnet-01
+      - ParameterKey: PrivateSubnetCIDR
+        ParameterValue: 10.0.16.0/20
+      - ParameterKey: PublicSecurityGroupName
+        ParameterValue: public-sg-01
+      - ParameterKey: PrivateSecurityGroupName
+        ParameterValue: private-sg-01
+      - ParameterKey: SSHIP
+        ParameterValue: 0.0.0.0/0
+      - ParameterKey: AMI
+        ParameterValue: ami-0e8ebb0ab254bb563
+      - ParameterKey: InstanceType
+        ParameterValue: t2.micro
+      - ParameterKey: KeyName
+        ParameterValue: ssh-key
+      - ParameterKey: PublicEC2Name
+        ParameterValue: public-ec2-01
+      - ParameterKey: PrivateEC2Name
+        ParameterValue: private-ec2-01
     regions:
     - ap-southeast-1
