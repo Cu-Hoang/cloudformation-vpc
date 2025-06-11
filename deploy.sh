@@ -17,7 +17,7 @@ if aws s3api head-bucket --bucket $S3_BUCKET --profile $AWS_PROFILE 2>/dev/null;
 else
   echo "Creating S3 bucket $S3_BUCKET..."
   if [ "$REGION" == "us-east-1" ]; then
-    aws s3api create-bucket --bucket $S3_BUCKET --region $REGION --object-ownership BucketOwnerPreferred --profile $AWS_PROFILE 
+    aws s3api create-bucket --bucket $S3_BUCKET --region $REGION --object-ownership BucketOwnerPreferred --profile $AWS_PROFILE
   else
     aws s3api create-bucket --bucket $S3_BUCKET \
       --region $REGION \

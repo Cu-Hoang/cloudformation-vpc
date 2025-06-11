@@ -4,7 +4,7 @@ Description: >-
                 A nested stack that creates a VPC
                 with
                 a Public Subnet containing a Public EC2 instance
-                and 
+                and
                 a Private Subnet containing a Private EC2 instance.
 
 Parameters:
@@ -29,7 +29,7 @@ Parameters:
   VpcName:
     Description: Name of the VPC
     Type: String
-  VpcCIDR: 
+  VpcCIDR:
     Description: CIDR Block of the VPC
     Type: String
   PublicSubnetName:
@@ -95,7 +95,7 @@ Resources:
         Owner: !Ref Owner
         NamePrefix: !Ref VpcName
         PublicSubnetID: !GetAtt VPCStack.Outputs.PublicSubnetID
-  
+
   RouteTableStack:
     Type: AWS::CloudFormation::Stack
     Properties:

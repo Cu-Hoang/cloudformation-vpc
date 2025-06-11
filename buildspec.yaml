@@ -1,0 +1,33 @@
+version: 0.2
+
+env:
+  variables:
+    S3_BUCKET: vpc-lab-1712
+    TASKCAT_OUTPUT: vpc-lab-1712-taskcat
+
+phases:
+  install:
+    commands:
+      - pip install cfn-lint==1.35.4 taskcat==0.9.57
+
+  pre_build:
+    on-failure: ABORT
+    commands:
+      - cfn-lint $(find . -type f \( -name "*.yml" -o -name "*.yaml" \) -not -name ".pre-commit-config.yaml")
+      - aws ssm get-parameter --name /lab/cloudformation --query 'Parameter.Value' --output text > parameters.json
+
+  build:
+    on-failure: ABORT
+    commands:
+      - mkdir -p temp_upload
+      - cp -r ec2 nat route_table security_group vpc temp_upload/
+      - cp root.yaml temp_upload/
+      - aws s3 sync temp_upload/ s3://$S3_BUCKET --delete
+      - taskcat test run
+    finally:
+      - aws s3 sync taskcat_outputs/ s3://$TASKCAT_OUTPUT/outputs --acl public-read --delete
+
+  artifacts:
+  files:
+    - root.yaml
+    - parameters.json
