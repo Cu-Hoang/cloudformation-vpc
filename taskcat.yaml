@@ -1,0 +1,14 @@
+general:
+  s3_bucket: vpc-lab-1712-taskcat
+
+project:
+  name: Test
+  regions:
+    - ap-southeast-1
+
+tests:
+  root-stack:
+    template: ./root.yaml
+    parameter_input: ./parameters.json
+    regions:
+    - ap-southeast-1

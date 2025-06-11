@@ -42,7 +42,7 @@ Resources:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VpcID
-      Tags: 
+      Tags:
       - Key: Application
         Value: !Ref AWS::StackName
       - Key: Environment
@@ -60,18 +60,18 @@ Resources:
       RouteTableId: !Ref PublicRouteTable
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref InternetGatewayId
-  
+
   PublicSubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PublicSubnetID
       RouteTableId: !Ref PublicRouteTable
-  
+
   PrivateRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VpcID
-      Tags: 
+      Tags:
       - Key: Application
         Value: !Ref AWS::StackName
       - Key: Environment
@@ -89,10 +89,9 @@ Resources:
       RouteTableId: !Ref PrivateRouteTable
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref NatGatewayId
-  
+
   PrivateSubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PrivateSubnetID
       RouteTableId: !Ref PrivateRouteTable
-

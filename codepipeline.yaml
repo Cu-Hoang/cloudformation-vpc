@@ -1,0 +1,286 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: CI/CD Pipeline
+
+Parameters:
+  ProjectName:
+    Description: Name of the project
+    Type: String
+    Default: vpc-lab
+  RepositoryName:
+    Description: Name of the repository
+    Type: String
+    Default: Cu-Hoang/cloudformation-vpc
+  Environment:
+    Description: Environment
+    Type: String
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+    ConstraintDescription: Must specify 'dev' or 'staging' or 'prod'
+    Default: dev
+  Owner:
+    Description: Name of Owner
+    Type: String
+    Default: ngochoang
+  NamePrefix:
+    Description: Prefix name
+    Type: String
+    Default: vpc-lab
+  BucketName:
+    Description: Name of Bucket
+    Type: String
+    Default: vpc-lab-1712
+
+Resources:
+  GitHubConnection:
+    Type: AWS::CodeConnections::Connection
+    Properties:
+      ConnectionName: !Sub ${ProjectName}-GitHubConnection
+      ProviderType: GitHub
+      Tags:
+        - Key: Application
+          Value: !Ref AWS::StackName
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Name
+          Value: !Sub ${NamePrefix}-github-connection
+
+  TemplatesBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketName
+      VersioningConfiguration:
+        Status: Enabled
+      AccessControl: Private
+      Tags:
+        - Key: Application
+          Value: !Ref AWS::StackName
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Name
+          Value: !Sub ${NamePrefix}-templates-bucket
+
+  ArtifactsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${BucketName}-artifacts
+      VersioningConfiguration:
+        Status: Enabled
+      AccessControl: Private
+      Tags:
+        - Key: Application
+          Value: !Ref AWS::StackName
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Name
+          Value: !Sub ${NamePrefix}-artifacts-bucket
+
+  TaskCatBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${BucketName}-taskcat
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerPreferred
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        IgnorePublicAcls: false
+        BlockPublicPolicy: false
+        RestrictPublicBuckets: false
+      Tags:
+        - Key: Application
+          Value: !Ref AWS::StackName
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Name
+          Value: !Sub ${NamePrefix}-taskcat-bucket
+
+  CFNRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: ['sts:AssumeRole']
+          Effect: Allow
+          Principal:
+            Service: [cloudformation.amazonaws.com]
+        Version: '2012-10-17'
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: ['sts:AssumeRole']
+          Effect: Allow
+          Principal:
+            Service: [codebuild.amazonaws.com]
+        Version: '2012-10-17'
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+
+  CodePipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Action: ['sts:AssumeRole']
+          Effect: Allow
+          Principal:
+            Service: [codepipeline.amazonaws.com]
+        Version: '2012-10-17'
+      Path: /
+      Policies:
+        - PolicyName: CodePipelineAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Action: s3:ListBucket
+                Effect: Allow
+                Resource: !GetAtt [ArtifactsBucket, Arn]
+              - Action: s3:*Object
+                Effect: Allow
+                Resource: !Sub ${ArtifactsBucket.Arn}/*
+              - Action:
+                  - 'cloudformation:CreateStack'
+                  - 'cloudformation:DescribeStacks'
+                  - 'cloudformation:DeleteStack'
+                  - 'cloudformation:UpdateStack'
+                  - 'cloudformation:CreateChangeSet'
+                  - 'cloudformation:ExecuteChangeSet'
+                  - 'cloudformation:DeleteChangeSet'
+                  - 'cloudformation:DescribeChangeSet'
+                  - 'cloudformation:SetStackPolicy'
+                  - 'iam:PassRole'
+                Effect: Allow
+                Resource: '*'
+              - Action:
+                  - 'codestar-connections:UseConnection'
+                Effect: Allow
+                Resource: !GetAtt [GitHubConnection, ConnectionArn]
+              - Action:
+                  - 'codebuild:StartBuild'
+                  - 'codebuild:BatchGetBuilds'
+                Effect: Allow
+                Resource: !GetAtt [CodeBuild, Arn]
+
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub ${ProjectName}-CodeBuild
+      Source:
+        Type: CODEPIPELINE
+        GitCloneDepth: 1
+        BuildSpec: buildspec.yaml
+      Artifacts: 
+        Type: CODEPIPELINE
+      Environment:
+        PrivilegedMode: True
+        Type: LINUX_CONTAINER
+        Image: aws/codebuild/standard:5.0
+        ComputeType: BUILD_GENERAL1_SMALL
+      ServiceRole: !GetAtt [CodeBuildRole, Arn]
+      Tags:
+        - Key: Application
+          Value: !Ref AWS::StackName
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Name
+          Value: !Sub ${NamePrefix}-codebuild
+
+  Pipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      ArtifactStore:
+        Location: !Ref ArtifactsBucket
+        Type: S3
+      ExecutionMode: QUEUED
+      Name: pipeline
+      PipelineType: V2
+      RoleArn: !GetAtt [CodePipelineRole, Arn]
+      Stages: 
+        - Name: Source
+          Actions: 
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: CodeStarSourceConnection
+                Version: 1
+              OutputArtifacts:
+                - Name: SourceOutput
+              Configuration:
+                FullRepositoryId: !Ref RepositoryName
+                BranchName: main
+                ConnectionArn: !GetAtt [GitHubConnection, ConnectionArn]
+                OutputArtifactFormat: CODE_ZIP
+              RunOrder: 1
+        - Name: Build
+          Actions: 
+            - Name: Build
+              InputArtifacts:
+                - Name: SourceOutput
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              OutputArtifacts: 
+                - Name: BuildOutput
+              Configuration:
+                ProjectName: !Ref CodeBuildProject
+              RunOrder: 1
+        - Name: Deploy
+          Actions: 
+            - Name: Deploy
+              InputArtifacts:
+                - Name: BuildOutput
+              ActionTypeId: 
+                Category: Deploy
+                Owner: AWS
+                Version: 1
+                Provider: CloudFormation
+              Configuration:
+                ActionMode: CREATE_UPDATE
+                StackName: !Sub ${ProjectName}-deploy-stack
+                Capabilities: CAPABILITY_NAMED_IAM
+                TemplatePath: BuildOutput::root.yaml
+                Parameters: BuildOutput::parameters.json
+                RoleArn: !GetAtt [CFNRole, Arn]
+              RunOrder: 1
+      Tags:
+        - Key: Application
+          Value: !Ref AWS::StackName
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: ProjectName
+          Value: !Ref ProjectName
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Name
+          Value: !Sub ${NamePrefix}-pipeline
