@@ -162,3 +162,13 @@ aws cloudformation delete-stack \
 - ```your_stack_name```: The name of your CloudFormation stack.
 - ```your_region```: The region that you deploy stack.
 - ```your_profile_name```: Your AWS CLI profile.
+
+## CI/CD Pipeline
+
+<p align="center">
+    <img src="./images/cloudformation_pipeline.png" alt="pipeline"></img>
+</p>
+
+<p align="center">
+    <img src="./images/result.png" alt="result"></img>
+</p>
